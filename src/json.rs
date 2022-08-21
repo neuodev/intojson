@@ -1,4 +1,5 @@
 use regex::Regex;
+use serde_json::{json, Value};
 
 use crate::utils::should_skip;
 use std::fmt::Display;
@@ -80,6 +81,13 @@ impl Json {
         let block_lines = &lines[idx + 1..end_idx];
         Block::new(&block_name, block_lines)
     }
+
+    pub fn to_json_value(self) -> Result<Value, String> {
+        let json_str =self.blocks.into_iter().map(|block| block.to_json()).collect::<Vec<String>>().join(",");
+        let json_str = format!(r"{{{}}}", json_str);
+        println!("{}", json_str);
+        serde_json::from_str(&json_str).map_err(|_| "Invalid json structure".into())
+    }
 }
 
 #[derive(Debug)]
@@ -96,6 +104,14 @@ impl Block {
             name: name.to_string(),
             attrs,
         }
+    }
+
+    
+    pub fn to_json(self) -> String {
+        let key = self.name;
+        let value = self.attrs.into_iter().map(|attr| attr.to_raw_json()).collect::<Vec<String>>().join(",");
+        let value: Value = serde_json::from_str(&format!("{{{}}}", value)).unwrap();
+        format!(r#""{}": {}"#, key, value.to_string())
     }
 }
 
@@ -130,4 +146,9 @@ impl Attr {
 
         Self { key, value }
     }
+
+    pub fn to_raw_json(&self) -> String {
+        format!(r#""{}":"{}""#, self.key, self.value)
+    }
+
 }

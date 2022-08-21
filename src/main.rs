@@ -7,7 +7,8 @@ use json::Json;
 
 fn main() -> Result<(), Error> {
     let json = Json::from_file("example.toml")?;
-    println!("{:#?}", json);
+    let result = json.to_json_value().unwrap();
 
+    println!("{:#?}", result);
     Ok(())
 }

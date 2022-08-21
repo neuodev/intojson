@@ -1,0 +1,7 @@
+{
+  "owner": { "dob": "1979-05-27T07:32:00-08:00", "name": "Tom Preston-Werner" },
+  "database": { "enabled": "true" },
+  "servers": {},
+  "servers.alpha": { "ip": "10.0.0.1", "role": "frontend" },
+  "servers.beta": { "ip": "10.0.0.2", "role": "backend" }
+}
