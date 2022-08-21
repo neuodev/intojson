@@ -1,7 +1,7 @@
 use regex::Regex;
 use serde_json::{Value};
 
-use crate::utils::should_skip;
+use crate::utils::{should_skip, get_type};
 use std::fmt::Display;
 use std::{fs, io::Error, path::Path, process};
 
@@ -155,6 +155,8 @@ impl Entry {
     }
 
     pub fn to_raw_json(&self) -> String {
+        let value_type = get_type(&self.value);
+        println!("{} -=> {:#?}",self.value, value_type);
         format!(r#""{}":"{}""#, self.key, self.value)
     }
 
