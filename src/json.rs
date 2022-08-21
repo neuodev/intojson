@@ -1,6 +1,9 @@
-use std::process;
+use regex::Regex;
 
 use crate::utils::should_skip;
+use std::process;
+
+
 
 #[derive(Debug)]
 pub struct Json;
@@ -19,8 +22,17 @@ impl Json {
             process::exit(0);
         }
 
+        let re = Regex::new(r"\[(?P<name>[^\]]+)\]").expect("Invalid regex");
+        let block_name = match re.captures(line) {
+            Some(cap) => cap["name"].to_string(),
+            None => {
+                eprintln!("Invalid TOML");
+                process::exit(0);
+            }
+        };
 
-        println!("block title: {}", line);
+        println!("New block: {}", block_name);
+
 
         idx
     }
