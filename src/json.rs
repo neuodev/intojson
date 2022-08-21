@@ -1,7 +1,7 @@
 use regex::Regex;
-use serde_json::{Value};
+use serde_json::Value;
 
-use crate::utils::{should_skip, get_type};
+use crate::utils::{get_type, should_skip, ValueType};
 use std::fmt::Display;
 use std::{fs, io::Error, path::Path, process};
 
@@ -83,7 +83,12 @@ impl Json {
     }
 
     fn to_json_value(&self) -> Result<Value, String> {
-        let json_str =self.blocks.iter().map(|block| block.to_json()).collect::<Vec<String>>().join(",");
+        let json_str = self
+            .blocks
+            .iter()
+            .map(|block| block.to_json())
+            .collect::<Vec<String>>()
+            .join(",");
         let json_str = format!(r"{{{}}}", json_str);
         serde_json::from_str(&json_str).map_err(|_| "Invalid json structure".into())
     }
@@ -113,10 +118,14 @@ impl Block {
         }
     }
 
-    
     pub fn to_json(&self) -> String {
         let key = self.name.clone();
-        let value = self.entries.iter().map(|attr| attr.to_raw_json()).collect::<Vec<String>>().join(",");
+        let value = self
+            .entries
+            .iter()
+            .map(|attr| attr.to_raw_json())
+            .collect::<Vec<String>>()
+            .join(",");
         let value: Value = serde_json::from_str(&format!("{{{}}}", value)).unwrap();
         format!(r#""{}": {}"#, key, value.to_string())
     }
@@ -142,22 +151,26 @@ impl Entry {
             }
         };
 
-        let re_value = Regex::new(r#"("|'|)(?P<value>[^"|'|\n]+)("|'|)"#).unwrap();
-        let value = match re_value.captures(&value) {
-            Some(cap) => cap["value"].to_string(),
-            None => {
-                eprintln!(r#""{}" is not value for the key {}"#, value, key);
-                process::exit(0);
-            }
-        };
+        // let re_value = Regex::new(r#"("|'|)(?P<value>[^"|'|\n]+)("|'|)"#).unwrap();
+        // let value = match re_value.captures(&value) {
+        //     Some(cap) => cap["value"].to_string(),
+        //     None => {
+        //         eprintln!(r#""{}" is not value for the key {}"#, value, key);
+        //         process::exit(0);
+        //     }
+        // };
 
         Self { key, value }
     }
 
     pub fn to_raw_json(&self) -> String {
         let value_type = get_type(&self.value);
-        println!("{} -=> {:#?}",self.value, value_type);
+        println!("{:#?} -=> {:#?}", self.value, value_type);
+
+        // let value = match value_type {
+        //     // ValueType
+        // };
+
         format!(r#""{}":"{}""#, self.key, self.value)
     }
-
 }
