@@ -1,0 +1,13 @@
+{
+  "name": "intojson",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "cargo watch -x \"run --bin intojson\"",
+    "fmt": "rustfmt ./src/main.rs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
