@@ -1,17 +1,52 @@
 use regex::Regex;
 
 use crate::utils::should_skip;
-use std::process;
+use std::fmt::Display;
+use std::{fs, io::Error, path::Path, process};
 
 #[derive(Debug)]
-pub struct Json;
+pub struct Json {
+    path: String,
+    blocks: Vec<Block>,
+}
 
 impl Json {
     pub fn is_block(line: &str) -> bool {
         !should_skip(line) && line.trim().starts_with("[")
     }
 
-    pub fn from_block(lines: &Vec<&str>, idx: usize) {
+    pub fn from_file<P: AsRef<Path> + Display>(path: P) -> Result<Json, Error> {
+        let toml_str = fs::read_to_string(&path)?;
+        let lines = toml_str
+            .split("\n")
+            .into_iter()
+            .map(|l| l.trim())
+            .collect::<Vec<&str>>();
+
+        let mut idx = 0;
+        let mut blocks = vec![];
+
+        while idx < lines.len() {
+            let line = lines[idx];
+            if should_skip(line) {
+                idx += 1;
+                continue;
+            }
+
+            if Json::is_block(line) {
+                blocks.push(Json::parse_block(&lines, idx));
+            }
+
+            idx += 1;
+        }
+
+        Ok(Json {
+            path: path.to_string(),
+            blocks,
+        })
+    }
+
+    pub fn parse_block(lines: &Vec<&str>, idx: usize) -> Block {
         let line = lines[idx];
 
         if !Json::is_block(line) {
@@ -28,7 +63,6 @@ impl Json {
             }
         };
 
-        println!("New block: {}", block_name);
         let mut end_idx = idx;
         loop {
             end_idx += 1;
@@ -44,14 +78,12 @@ impl Json {
         }
 
         let block_lines = &lines[idx + 1..end_idx];
-        let block =Block::new(&block_name, block_lines);
-
-        println!("{:#?}", block)
+        Block::new(&block_name, block_lines)
     }
 }
 
 #[derive(Debug)]
-struct Block {
+pub struct Block {
     pub name: String,
     pub attrs: Vec<Attr>,
 }
@@ -62,7 +94,7 @@ impl Block {
 
         Block {
             name: name.to_string(),
-            attrs
+            attrs,
         }
     }
 }
@@ -77,7 +109,10 @@ impl Attr {
     pub fn new(line: &str) -> Self {
         let re = Regex::new(r#"(?P<key>[^=\n]+)=\s*(?P<value>.*)"#).unwrap();
         let (key, value) = match re.captures(line) {
-            Some(cap) => (cap["key"].trim().to_string(), cap["value"].trim().to_string()),
+            Some(cap) => (
+                cap["key"].trim().to_string(),
+                cap["value"].trim().to_string(),
+            ),
             None => {
                 eprintln!(r#""{line}" is not a valid TOML"#);
                 process::exit(0);
@@ -85,16 +120,14 @@ impl Attr {
         };
 
         let re_value = Regex::new(r#"("|'|)(?P<value>[^"|'|\n]+)("|'|)"#).unwrap();
-        let value = match  re_value.captures(&value) {
+        let value = match re_value.captures(&value) {
             Some(cap) => cap["value"].to_string(),
             None => {
                 eprintln!(r#""{}" is not value for the key {}"#, value, key);
-                process::exit(0);      
+                process::exit(0);
             }
         };
 
         Self { key, value }
     }
-
-
 }
