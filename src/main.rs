@@ -17,6 +17,11 @@ fn main() -> Result<(), Error> {
 
     files.into_iter().map(|f| {
         thread::spawn(|| {
+            let path = Path::new(&f);
+            if !path.exists() {
+                eprintln!("'{}' doesn't exist", f);
+                process::exit(0);
+            }
             let json = Json::from_file(f).unwrap();
             json.save().expect("Unable to save json file");
         })

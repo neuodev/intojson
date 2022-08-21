@@ -1,5 +1,5 @@
 use regex::Regex;
-use serde_json::{json, Value};
+use serde_json::{Value};
 
 use crate::utils::should_skip;
 use std::fmt::Display;
@@ -91,7 +91,8 @@ impl Json {
     pub fn save(&self) -> Result<(), Error> {
         let output = self.path.replace(".toml", ".json");
         let json = self.to_json_value().unwrap();
-        fs::write(output, json.to_string())?;
+        let json = serde_json::to_string_pretty(&json).unwrap();
+        fs::write(output, json)?;
         Ok(())
     }
 }
