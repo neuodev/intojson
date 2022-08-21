@@ -82,46 +82,52 @@ impl Json {
         Block::new(&block_name, block_lines)
     }
 
-    pub fn to_json_value(self) -> Result<Value, String> {
-        let json_str =self.blocks.into_iter().map(|block| block.to_json()).collect::<Vec<String>>().join(",");
+    fn to_json_value(&self) -> Result<Value, String> {
+        let json_str =self.blocks.iter().map(|block| block.to_json()).collect::<Vec<String>>().join(",");
         let json_str = format!(r"{{{}}}", json_str);
-        println!("{}", json_str);
         serde_json::from_str(&json_str).map_err(|_| "Invalid json structure".into())
+    }
+
+    pub fn save(&self) -> Result<(), Error> {
+        let output = self.path.replace(".toml", ".json");
+        let json = self.to_json_value().unwrap();
+        fs::write(output, json.to_string())?;
+        Ok(())
     }
 }
 
 #[derive(Debug)]
 pub struct Block {
     pub name: String,
-    pub attrs: Vec<Attr>,
+    pub entries: Vec<Entry>,
 }
 
 impl Block {
     fn new(name: &str, lines: &[&str]) -> Self {
-        let attrs = lines.into_iter().map(|&line| Attr::new(line)).collect();
+        let entries = lines.into_iter().map(|&line| Entry::new(line)).collect();
 
-        Block {
+        Self {
             name: name.to_string(),
-            attrs,
+            entries,
         }
     }
 
     
-    pub fn to_json(self) -> String {
-        let key = self.name;
-        let value = self.attrs.into_iter().map(|attr| attr.to_raw_json()).collect::<Vec<String>>().join(",");
+    pub fn to_json(&self) -> String {
+        let key = self.name.clone();
+        let value = self.entries.iter().map(|attr| attr.to_raw_json()).collect::<Vec<String>>().join(",");
         let value: Value = serde_json::from_str(&format!("{{{}}}", value)).unwrap();
         format!(r#""{}": {}"#, key, value.to_string())
     }
 }
 
 #[derive(Debug)]
-pub struct Attr {
+pub struct Entry {
     pub key: String,
     pub value: String,
 }
 
-impl Attr {
+impl Entry {
     pub fn new(line: &str) -> Self {
         let re = Regex::new(r#"(?P<key>[^=\n]+)=\s*(?P<value>.*)"#).unwrap();
         let (key, value) = match re.captures(line) {
