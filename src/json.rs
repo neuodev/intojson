@@ -1,7 +1,7 @@
 use regex::Regex;
 use serde_json::Value;
 
-use crate::utils::{get_type, should_skip, ValueType};
+use crate::utils::{get_type, should_skip, ValueType, get_string, to_json_obj};
 use std::fmt::Display;
 use std::{fs, io::Error, path::Path, process};
 
@@ -151,26 +151,19 @@ impl Entry {
             }
         };
 
-        // let re_value = Regex::new(r#"("|'|)(?P<value>[^"|'|\n]+)("|'|)"#).unwrap();
-        // let value = match re_value.captures(&value) {
-        //     Some(cap) => cap["value"].to_string(),
-        //     None => {
-        //         eprintln!(r#""{}" is not value for the key {}"#, value, key);
-        //         process::exit(0);
-        //     }
-        // };
-
         Self { key, value }
     }
 
     pub fn to_raw_json(&self) -> String {
         let value_type = get_type(&self.value);
-        println!("{:#?} -=> {:#?}", self.value, value_type);
+        // println!("{:#?} -=> {:#?}", self.value, value_type);
 
-        // let value = match value_type {
-        //     // ValueType
-        // };
+        let value = match value_type {
+            ValueType::String => format!(r#""{}""#, get_string(&self.value)),
+            ValueType::Object => to_json_obj(&self.value),
+            _ => self.value.to_string(),
+        };
 
-        format!(r#""{}":"{}""#, self.key, self.value)
+        format!(r#""{}": {}"#, self.key, value)
     }
 }

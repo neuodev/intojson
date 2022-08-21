@@ -40,13 +40,25 @@ pub fn get_type(entry: &str) -> ValueType {
     process::exit(0);
 }
 
-pub fn get_string(entry: &str) {
+pub fn get_string(entry: &str) -> String {
     let re = Regex::new(r#"("|'|)(?P<value>[^"|'|\n]+)("|'|)"#).unwrap();
-    let value = match re.captures(&entry) {
+    match re.captures(&entry) {
         Some(cap) => cap["value"].to_string(),
         None => {
-            eprintln!(r#""{}" is not value for the key {}"#, value, key);
+            eprintln!(r#""{}" is not value"#, entry);
             process::exit(0);
         }
-    };
+    }
+}
+
+
+pub fn to_json_obj(entry: &str) -> String {
+    let re = Regex::new(r#"(?P<key>[^:,{]+)\s*(?P<sep>=)"#).unwrap();
+
+    let mut obj = entry.to_string();
+    re.captures_iter(entry).for_each(|cap| {
+        obj = obj.replace(&cap[0], &format!("\"{}\":", cap["key"].trim()));
+    });
+
+    obj
 }
