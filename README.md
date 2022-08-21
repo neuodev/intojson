@@ -34,8 +34,9 @@ $ intojson example.toml
 
 <details>
 <summary> example.json</summary>
-### Input 
-```toml 
+### Input
+
+```toml
 # This is a TOML document
 
 # title = "TOML Example"
@@ -61,7 +62,8 @@ role = "frontend"
 ip = "10.0.0.2"
 role = "backend"
 
-````
+```
+
 ### Output
 
 ```json
@@ -90,6 +92,6 @@ role = "backend"
     "role": "backend"
   }
 }
-````
+```
 
 <details>
